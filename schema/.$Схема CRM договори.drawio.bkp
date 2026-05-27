@@ -1,0 +1,48 @@
+<mxfile host="Electron">
+  <diagram name="Сторінка-1" id="imZyNBZz9EkNLCh440zw">
+    <mxGraphModel dx="1857" dy="1891" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="xLQqsGP4wDbx-OHAPbiL-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;align=left;spacingLeft=5;" value="Контрагенти:&lt;div&gt;&lt;br&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;1. Назва / Ім&#39;я&lt;/div&gt;&lt;div&gt;2. ЄДРПОУ / ІПН&lt;/div&gt;&lt;div&gt;3. Податковий номер&lt;/div&gt;&lt;div&gt;4. Контакти (тел., емейл, нова пошта)&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="220" width="180" x="-26" y="-30" as="geometry" />
+        </mxCell>
+        <mxCell id="xLQqsGP4wDbx-OHAPbiL-11" edge="1" parent="1" source="xLQqsGP4wDbx-OHAPbiL-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="xLQqsGP4wDbx-OHAPbiL-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="xLQqsGP4wDbx-OHAPbiL-12" edge="1" parent="1" source="xLQqsGP4wDbx-OHAPbiL-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="xLQqsGP4wDbx-OHAPbiL-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="10" />
+              <mxPoint x="570" y="10" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xLQqsGP4wDbx-OHAPbiL-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;fontSize=16;spacingLeft=5;" value="Договори:&lt;div&gt;&lt;br&gt;1. Контрагент 1&lt;div&gt;2. Контрагент 2 (при тристоронньому договорі)&lt;br&gt;&lt;div&gt;3.&amp;nbsp;&lt;span style=&quot;background-color: transparent;&quot;&gt;Реєстр.&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;# дог.&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;4. № Дог.&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;5. Специфікації (прописується лише кількість та номер угоди за наявності)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;6. Сума договору (&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;7. Тип дог.&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;8. Дата дог.&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;9. Дата завершення&lt;/span&gt;&lt;/div&gt;&lt;div&gt;10. Автопролонгація&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="340" width="290" x="190" y="-90" as="geometry" />
+        </mxCell>
+        <mxCell id="xLQqsGP4wDbx-OHAPbiL-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;fontSize=16;spacingLeft=5;" value="Товари&lt;div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;1. Назва товару&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;2. ПДВ % (за замовчуванням 20%, але з можливістю коригування&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;3. Ціна (без ПДВ) автоматично присвоюється (вираховується), якщо вказана ціна з ПДВ&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;4. Ціна (з ПДВ)&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;автоматично присвоюється (вираховується, якщо вказана ціна без ПДВ&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="200" width="410" x="570" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="xLQqsGP4wDbx-OHAPbiL-24" edge="1" parent="1" source="xLQqsGP4wDbx-OHAPbiL-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="xLQqsGP4wDbx-OHAPbiL-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="940" y="310" />
+              <mxPoint x="940" y="310" />
+            </Array>
+            <mxPoint x="610" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="xLQqsGP4wDbx-OHAPbiL-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;align=left;spacingLeft=5;" value="Специфікації (угоди):&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;1. № угоди&lt;br&gt;&lt;div&gt;2. Назва товару (вибирається із випадаючого списку з таблиці товари)&lt;/div&gt;&lt;div&gt;3. ціна (підтягується автосвтичноз таблиці товари)&lt;/div&gt;&lt;div&gt;4. Кількість&lt;/div&gt;&lt;div&gt;5. Заг. вартісь&lt;/div&gt;&lt;div&gt;6. В т.ч. ПДВ (%)&lt;/div&gt;&lt;div&gt;7. Валюта (грн. дол., евро)&lt;/div&gt;&lt;div&gt;8. Тип коштів (бюджетні, небюджетні)&lt;/div&gt;&lt;div&gt;9. Тип оплати (передплата, післяплата, часткова передплата)&lt;/div&gt;&lt;div&gt;10. Дата передплати (активно, якщо пункт 8 тип оплати вказано &quot;передплата&quot; або &quot;часткова передплата&quot;)&lt;/div&gt;&lt;div&gt;11. Сума передплати&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;(активно, якщо пункт 8 тип оплати вказано &quot;передплата&quot; або &quot;часткова передплата&quot;)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;12. Строк післяплати&lt;/div&gt;&lt;div&gt;13. Сума післяплати&lt;/div&gt;&lt;div&gt;14. Дата післяплати&lt;/div&gt;&lt;div&gt;15. Відмітка про повну оплату угоди (має ставиться автоматично, потрібно придумати логіку...)&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;16. Строк поставки товарів/послуг&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;17.&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;Дата&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;відвантаження&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;(ставиться лише при&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;наявності&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;оригіналу&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;видаткової)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;18. Дата фактичного відвантаження&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="670" width="480" x="520" y="-90" as="geometry" />
+        </mxCell>
+        <mxCell id="xLQqsGP4wDbx-OHAPbiL-26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;align=left;spacingLeft=5;" value="Типи угод (специфікацій)&lt;br&gt;З покупцями&lt;div&gt;З постачальниками&lt;/div&gt;&lt;div&gt;Оренда&lt;/div&gt;&lt;div&gt;Фін. допомога&lt;/div&gt;&lt;div&gt;NDA&lt;/div&gt;&lt;div&gt;Меморандум&lt;/div&gt;" vertex="1">
+          <mxGeometry height="190" width="200" x="790" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="xLQqsGP4wDbx-OHAPbiL-32" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;align=left;spacingLeft=5;" value="Типи договору:&lt;br&gt;Продаж&lt;div&gt;Купівля&lt;/div&gt;&lt;div&gt;Оренда&lt;/div&gt;&lt;div&gt;Фін. допомога&lt;/div&gt;&lt;div&gt;NDA&lt;/div&gt;&lt;div&gt;Меморандум&lt;/div&gt;" vertex="1">
+          <mxGeometry height="190" width="200" x="154" y="260" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
