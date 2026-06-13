@@ -53,13 +53,15 @@
 
             <div id="actions_bar_counterparties">
               <button id="btn_add_counterparty" class="action-btn">+ Додати контрагента</button>
+
+              <button id="btn_edit_counterparty" class="action-btn" disabled style="background-color: #cccccc; color: #666666; cursor: default; margin-right: 10px">
+                Редагувати виділеного
+              </button>
+
+              <button id="btn_delete_counterparty" class="action-btn" style="background-color: #cccccc; color: #666666; margin-top: 20px" disabled>Видалити виділені (0)</button>
             </div>
 
             <div id="box_for_counterparties_list">
-              <button id="btn_delete_selected_counterparties" class="action-btn" style="background-color: #cccccc; color: #666666; margin-top: 20px" disabled>
-                Видалити виділені (0)
-              </button>
-
               <div class="table-container" style="margin-top: 15px">
                 <table border="1" style="width: 100%; border-collapse: collapse; text-align: left">
                   <thead>
@@ -112,7 +114,7 @@
       <div id="modal_window_counterparty" class="modal_window">
         <button id="btn_close_modal_window_counterparty" class="btn_close_modal_window">&times;</button>
 
-        <h2>Новий контрагент</h2>
+        <h2 id="modal_counterparty_title">Новий контрагент</h2>
         <form id="form_add_counterparty">
           <!----------------------------------------------------------------------------------------------->
           <!-- ADD назва КОНТРАГЕНТА -->
@@ -155,7 +157,7 @@
                 <!----------------------------------------------------------------------------------------------->
                 <div class="block_counterparty_contact" style="flex: 1">
                   <label>Телефон</label>
-                  <input type="tel" id="input_counterparty_phone" class="input_contact_phone" maxlength="19" />
+                  <input type="tel" class="input_contact_phone" maxlength="19" />
                 </div>
 
                 <!----------------------------------------------------------------------------------------------->
@@ -237,31 +239,9 @@
             <textarea id="input_counterparty_notes" name="counterparty_notes" rows="2"></textarea>
           </div>
 
+          <input type="hidden" id="hidden_counterparty_id" value="" />
           <button type="submit" id="btn_submit_counterparty" class="action-btn">Зберегти контрагента</button>
         </form>
-      </div>
-    </div>
-
-    <!----------------------------------------------------------------------------------------------->
-    <!-- Модальне вікно для відображення ТЕЛЕФОНІВ КОНТРАГЕНТА -->
-    <!----------------------------------------------------------------------------------------------->
-    <div
-      id="background_for_modal_window_phones"
-      class="background_for_modal_window"
-      style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5)"
-    >
-      <div class="modal_window" style="background-color: white; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 400px; border-radius: 8px; position: relative">
-        <button
-          id="btn_close_modal_view_phones"
-          class="btn_close_modal_window"
-          style="position: absolute; right: 15px; top: 10px; background: none; border: none; font-size: 24px; cursor: pointer"
-        >
-          &times;
-        </button>
-
-        <h3 style="margin-top: 0">Тел.</h3>
-
-        <div id="modal_phones_list_content" style="margin-top: 15px"></div>
       </div>
     </div>
 

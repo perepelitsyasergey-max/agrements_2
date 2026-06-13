@@ -46,7 +46,7 @@ const btnCloseModalWindowCounterparty = document.getElementById("btn_close_modal
 // ДІСТАЄМО З HTML ПОЛЯ ВВЕДЕННЯ (ІНПУТИ) МОДАЛЬНОГО ВІКНА "ДОДАТИ КОНТРАГЕНТА"
 // ===========================================================================================
 //витягує коробку ТІЛЬКИ для ОДНОГО, найпершого (основного) поля телефону
-const phoneInput = document.getElementById("input_counterparty_phone");
+const phoneInput = document.getElementById(".input_contact_phone");
 // Кнопка «Додати ще контакт» у модальному вікні "ДОДАТИ КОНТРАГЕНТА"
 const btnAddMoreContacts = document.getElementById("btn_add_more_contacts");
 // Контейнер, де будуть відображатися поля введення введення основного Телефону + ім'я + посада/нотатки та всіх додатково доданих таких полів
@@ -56,8 +56,8 @@ const btnAddMoreEmails = document.getElementById("btn_add_more_emails");
 // Контейнер, де будуть відображатися поля введення введення основного емейлу + коментарів та всіх додатково доданих таких полів
 const emailsContainer = document.getElementById("emails_container");
 
-// Головна глобальна коробка, де будуть зберігатися всі завантажені контрагенти
-let globalCounterparties = [];
+// Створюємо на складі велику порожню спільну коробку (масив), де тимчасово
+// зберігатимемо копії всіх завантажених із сервера контрагентів, щоб мати до них швидкий доступ
 
 // ===========================================================================================
 // ФУНКЦІЯ, ЯКА ПРИЙМАЄ ЯК АРГУМЕНТ ВКЛАДКУ І РОБИТЬ ЇЇ АКТИВНОЮ (ВИДИМОЮ)
@@ -90,7 +90,7 @@ btnTabAgreements.addEventListener("click", function () {
 btnTabCounterparties.addEventListener("click", function () {
   // 1. Спочатку перемикаємо ширму (показуємо кімнату контрагентів)
   switchTab(boxTabCounterparties);
-  // 2. Одразу викликаємо кухонний комбайн для завантаження даних із сервера
+  // 2. ДОДАЙ ЦЕЙ РЯДОК: Наказуємо працівникові терміново увімкнути конвеєр завантаження!
   loadCounterparties();
 });
 
@@ -111,6 +111,11 @@ btnTabLogs.addEventListener("click", function () {
 // ============================================================================================
 
 btnAddCounterparty.addEventListener("click", function () {
+  // КОМАНДА ПРАЦІВНИКУ: Обов'язково міняємо головну вивіску (заголовок) вікна назад
+  document.getElementById("modal_counterparty_title").innerText = "Додавання нового контрагента";
+  // Очищаємо секретну кишеню форми від ID, щоб сервер знав, що ми створюємо новий запис, а не оновлюємо старий
+  document.getElementById("form_add_counterparty").removeAttribute("data-edit-id");
+
   // Перевіряємо, чи є взагалі головна форма на складі, і скидаємо її стандартний текст
   if (formAddCounterparty) {
     formAddCounterparty.reset();
@@ -277,6 +282,7 @@ if (btnAddMoreContacts && contactsContainer) {
     if (firstRow) {
       // 2. Робимо точний клон рядка
       const newRow = firstRow.cloneNode(true);
+      newRow.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
 
       // 3. Очищаємо всі поля введення в копії
       const newRowCleared = newRow.querySelectorAll("input");
@@ -443,372 +449,714 @@ if (btnAddMoreEmails && emailsContainer) {
 }
 
 // ===========================================================================================
-// ЛОГІКА ЗБОРУ ДАНИХ ФОРМИ "ДОДАТИ КОНТРАГЕНТА" ТА ВІДПРАВКА НА СЕРВЕР (FETCH)
+// КОМАНДА ПРАЦІВНИКУ: РЕАГУВАТИ НА КНОПКУ "РЕДАГУВАТИ ВИДІЛЕНОГО"
 // ===========================================================================================
+document.getElementById("btn_edit_counterparty").addEventListener("click", function () {
+  // 1. Шукаємо всі активні галочки в нашій таблиці
+  const checkedBoxes = document.querySelectorAll(".counterparty-checkbox:checked");
 
-if (formAddCounterparty) {
-  // Слухаємо головну кнопку форми "Зберегти" (подія submit)
-  formAddCounterparty.addEventListener("submit", function (e) {
-    e.preventDefault(); // Забороняємо браузеру перезавантажувати сторінку по-старому
+  // Безпека: якщо чомусь вибрано не один рядок, зупиняємо конвеєр
+  if (checkedBoxes.length !== 1) {
+    alert("Будь ласка, виберіть рівно одного контрагента для редагування!");
+    return;
+  }
 
-    // 1. Спочатку збираємо динамічні КОНТАКТИ (Телефони)
-    const contactRows = document.querySelectorAll("#contacts_container .contact-row");
-    //  # (решітка) означає, що ми шукаємо унікальний ID (id="contacts_container").
-    //  Пробіл після решітки означає: «зайти всередину цього об'єкта».
-    //  . (крапка) означає, що далі йде назва класу (class="contact-row").
-    const contactsList = [];
+  // 2. Витягуємо ID контрагента з нашої коробки (зберігається в атрибуті data-id галочки)
+  const counterpartyId = checkedBoxes[0].getAttribute("data-id");
 
-    contactRows.forEach((row) => {
-      const phoneVal = row.querySelector(".input_contact_phone").value.trim();
-      const nameVal = row.querySelector(".input_contact_name").value.trim();
-      const roleVal = row.querySelector(".input_contact_role").value.trim();
+  // 3. Міняємо заголовок у нашому модальному вікні на правильний напис
+  document.getElementById("modal_counterparty_title").innerText = "Редагування контрагента";
 
-      // Записуємо в список тільки якщо працівник ввів хоча б телефон або ім'я
-      if (phoneVal || nameVal) {
-        contactsList.push({
-          phone: phoneVal,
-          name: nameVal,
-          role: roleVal,
-        });
+  // 4. Записуємо ID в секретну кишеню форми, щоб вона знала, що ми саме РЕДАГУЄМО, а не створюємо
+  document.getElementById("form_add_counterparty").setAttribute("data-edit-id", counterpartyId);
+
+  // 5. Показуємо модальне вікно (піднімаємо завісу)
+  document.getElementById("background_for_modal_window_counterparty").style.display = "flex";
+
+  console.log("Працівник: Готуємося редагувати контрагента з ID:", counterpartyId);
+});
+
+// ===========================================================================================
+// ФУНКЦІЯ ЗАВАНТАЖЕННЯ КОНТРАГЕНТІВ ТА НАПОВНЕННЯ ТАБЛИЦІ
+// ===========================================================================================
+function loadCounterparties() {
+  // Наказуємо кур'єру збігати на сервер за даними
+  fetch("/get_counterparties")
+    // ВАЖЛИВИЙ КРОК: Беремо доставлений конверт (res) і розпаковуємо з нього чистий JSON-вагон з даними
+    .then((res) => res.json())
+    // Коли дані успішно розпаковані, беремо цей чистий об'єкт (data) у руки
+    .then((data) => {
+      // Звертаємося до масиву всередині об'єкта: data.counterparties
+      if (!data || !data.counterparties) {
+        console.error("Сервер повернув дані без масиву контрагентів:", data);
+        return;
       }
-    });
 
-    // 2. Тепер збираємо динамічні ЕМЕЙЛИ
-    const emailRows = document.querySelectorAll("#emails_container .email-row");
-    //  # (решітка) означає, що ми шукаємо унікальний ID (id="contacts_container").
-    //  Пробіл після решітки означає: «зайти всередину цього об'єкта».
-    //  . (крапка) означає, що далі йде назва класу (class="contact-row").
-    const emailsList = [];
+      // Кладемо отриманий масив у велику спільну коробку для зберігання на складі
+      globalCounterparties = data.counterparties;
 
-    emailRows.forEach((row) => {
-      const emailVal = row.querySelector(".input_counterparty_email").value.trim();
-      const commentVal = row.querySelector(".input_counterparty_email_comment").value.trim();
+      // Шукаємо на сторінці за ІСТИННИМ унікальним номером правильний контейнер таблиці
+      const tbody = document.getElementById("counterparties_table_body");
+      // Якщо працівник не знайшов такого контейнера на сторінці — негайно зупиняємо роботу
+      if (!tbody) return;
+      // Повністю протираємо контейнер від старого бруду й очищаємо його вміст
+      tbody.innerHTML = "";
 
-      // Записуємо в список тільки якщо поле емейла не порожнє
-      if (emailVal) {
-        emailsList.push({
-          email: emailVal,
-          comment: commentVal,
+      // ЗАПУСКАЄМО КОНВЕЄР САМЕ НА МАСИВІ COUNTERPARTIES
+      data.counterparties.forEach((cp) => {
+        // На кожному колі конвеєра працівник створює з повітря один новий фізичний рядок таблиці (tr)
+        const tr = document.createElement("tr");
+
+        // 1. КОМІРКА ЧЕКБОКСА (Стовпчик 1)
+        const tdCheck = document.createElement("td");
+        tdCheck.style.textAlign = "center";
+        const chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "counterparty-checkbox";
+        chk.value = cp.id;
+
+        // ОНОВЛЕНИЙ ОБРОБНИК ПОДІЙ:
+        chk.addEventListener("change", function () {
+          const checkedBoxes = document.querySelectorAll(".counterparty-checkbox:checked");
+          const btnDelete = document.getElementById("btn_delete_counterparty");
+          const btnEdit = document.getElementById("btn_edit_counterparty");
+
+          // Керування кнопкою видалення
+          if (checkedBoxes.length > 0) {
+            btnDelete.disabled = false;
+            btnDelete.classList.remove("disabled-btn");
+            btnDelete.classList.add("delete-active"); // Додаємо червоний клас
+            // ТУТ МИ ОНОВЛЮЄМО ТЕКСТ КНОПКИ З КІЛЬКІСТЮ
+            btnDelete.textContent = `Видалити (${checkedBoxes.length})`;
+          } else {
+            btnDelete.disabled = true;
+            btnDelete.classList.add("disabled-btn");
+            btnDelete.classList.remove("delete-active"); // Прибираємо червоний клас
+            btnDelete.textContent = "Видалити";
+          }
+
+          // Керування кнопкою редагування
+          if (checkedBoxes.length === 1) {
+            btnEdit.disabled = false;
+            btnEdit.classList.remove("disabled-btn");
+            btnEdit.classList.add("edit-active"); // Додаємо активний клас
+          } else {
+            btnEdit.disabled = true;
+            btnEdit.classList.add("disabled-btn");
+            btnEdit.classList.remove("edit-active"); // Прибираємо активний клас
+          }
         });
-      }
-    });
 
-    // 3. Пакуємо всю нашу велику валізу для відправки на сервер Flask
-    const formData = {
-      counterparty_name: document.getElementById("input_counterparty_name").value.trim(),
-      counterparty_edrpou: document.getElementById("input_counterparty_edrpou").value.trim(),
-      counterparty_tax_number: document.getElementById("input_counterparty_tax_number").value.trim(),
-      counterparty_delivery_address: document.getElementById("input_counterparty_delivery_address").value.trim(),
-      counterparty_notes: document.getElementById("input_counterparty_notes").value.trim(),
+        tdCheck.appendChild(chk);
+        tr.appendChild(tdCheck);
 
-      // Сюди кладемо наші готові списки-коробки:
-      contacts: contactsList,
-      emails: emailsList,
-    };
+        // 2. КОМІРКА НАЗВИ (Стовпчик 2)
+        const tdName = document.createElement("td");
+        tdName.textContent = cp.name || cp.counterparty_name || "";
+        tr.appendChild(tdName);
 
-    // 2. Відправляємо нашого кур'єра (fetch) на сервер Flask за адресою /add_counterparty
-    fetch("/add_counterparty", {
-      method: "POST", // Метод доставки - посилка (POST)
-      headers: {
-        "Content-Type": "application/json", // Попереджаємо сервер, що всередині пакунка лежить JSON-формат
-      },
-      body: JSON.stringify(formData), // Перетворюємо наш об'єкт на текстовий рядок для транспортування
-    })
-      .then((response) => response.json()) // Чекаємо відповідь від сервера і розпаковуємо її
-      .then((data) => {
-        if (data.status === "success") {
-          alert(data.message); // Показуємо працівнику віконце: "Контрагента успішно створено!"
+        // 3. КОМІРКА ЄДРПОУ / ІПН (Стовпчик 3)
+        const tdEdrpou = document.createElement("td");
+        tdEdrpou.textContent = cp.edrpou || cp.counterparty_edrpou || "";
+        tr.appendChild(tdEdrpou);
 
-          // Очищаємо всі поля форми, щоб вона стала знову порожньою
-          formAddCounterparty.reset();
+        // 4. КОМІРКА ПОДАТКОВОГО НОМЕРА (Стовпчик 4)
+        const tdTaxNumber = document.createElement("td");
+        tdTaxNumber.textContent = cp.tax_number || cp.counterparty_tax_number || "";
+        tr.appendChild(tdTaxNumber);
 
-          // Ховаємо модальне вікно назад (повертаємо замок none)
-          document.getElementById("background_for_modal_window_counterparty").style.display = "none";
+        // --- 5. ЗБІРКА КОМІРКИ ТЕЛЕФОНІВ (Стовпчик 5) ---
+        const tdPhones = document.createElement("td");
 
-          // Тут згодом ми додамо оновлення таблиці на екрані
-          loadCounterparties();
+        // ВАЖЛИВО: беремо список саме з коробки cp.phones, яку надсилає сервер
+        const phonesArr = cp.phones || [];
+
+        if (phonesArr.length > 0) {
+          // 1. ПЕРШИЙ ТЕЛЕФОН (Показуємо завжди)
+          const firstPhoneDiv = document.createElement("span");
+          let firstText = phonesArr[0].phone || "";
+          let firstDetails = [];
+
+          // Складаємо дані в кошик
+          if (phonesArr[0].name) firstDetails.push(phonesArr[0].name);
+
+          // ВИПРАВЛЕННЯ ТУТ: додаємо дужки до ролі
+          if (phonesArr[0].role) firstDetails.push(`(${phonesArr[0].role})`);
+
+          // Якщо треба, додаємо коментар (якщо він є у першого телефону)
+          if (phonesArr[0].comment) firstDetails.push(phonesArr[0].comment);
+
+          // Якщо в кошику щось є – додаємо це до номера
+          if (firstDetails.length > 0) {
+            firstText += ` — ${firstDetails.join(", ")}`;
+          }
+          firstPhoneDiv.textContent = firstText;
+          tdPhones.appendChild(firstPhoneDiv);
+
+          // 2. ЯКЩО Є ДОДАТКОВІ ТЕЛЕФОНИ
+          if (phonesArr.length > 1) {
+            // Створюємо секретну коробку для решти телефонів і закриваємо її на замок
+            const hiddenPhonesBox = document.createElement("div");
+            hiddenPhonesBox.style.display = "none";
+            hiddenPhonesBox.style.marginTop = "4px";
+
+            // Конвеєр пакує всі інші телефони (починаючи з індексу 1) у секретну коробку
+            for (let i = 1; i < phonesArr.length; i++) {
+              const extraPhoneDiv = document.createElement("div");
+              let extraText = phonesArr[i].phone || "";
+
+              let extraDetails = [];
+              if (phonesArr[i].name) extraDetails.push(phonesArr[i].name);
+
+              // ОСЬ ТУТ МИ ДОДАЄМО ДУЖКИ:
+              if (phonesArr[i].role) extraDetails.push(`(${phonesArr[i].role})`);
+
+              if (phonesArr[i].comment) extraDetails.push(phonesArr[i].comment);
+
+              if (extraDetails.length > 0) {
+                extraText += ` — ${extraDetails.join(", ")}`;
+              }
+
+              extraPhoneDiv.textContent = extraText;
+              extraPhoneDiv.style.marginBottom = "4px";
+              hiddenPhonesBox.appendChild(extraPhoneDiv);
+            }
+
+            // Кладемо секретну коробку в клітинку таблиці
+            tdPhones.appendChild(hiddenPhonesBox);
+
+            // 3. СТВОРЮЄМО КНОПКУ-ПОСИЛАННЯ ДЛЯ РОЗГОРТАННЯ
+            const togglePhonesLink = document.createElement("a");
+            togglePhonesLink.href = "#";
+            togglePhonesLink.textContent = `...ще (${phonesArr.length - 1})`;
+            togglePhonesLink.style.color = "#007bff";
+            togglePhonesLink.style.textDecoration = "underline";
+            togglePhonesLink.style.cursor = "pointer";
+            togglePhonesLink.style.fontSize = "12px";
+            togglePhonesLink.style.display = "inline-block";
+            togglePhonesLink.style.marginTop = "6px";
+
+            // Наказуємо працівнику стежити за кліком по кнопці телефонів
+            togglePhonesLink.addEventListener("click", function (e) {
+              e.preventDefault(); // Забороняємо сторінці стрибати вгору
+
+              if (hiddenPhonesBox.style.display === "none") {
+                hiddenPhonesBox.style.display = "block"; // Змиваємо замок — показуємо все
+                togglePhonesLink.textContent = "сховати";
+              } else {
+                hiddenPhonesBox.style.display = "none"; // Вішаємо замок назад
+                togglePhonesLink.textContent = `...ще (${phonesArr.length - 1})`;
+              }
+            });
+
+            // Кладемо кнопку поруच із першим телефоном
+            tdPhones.appendChild(togglePhonesLink);
+          }
         } else {
-          alert("Помилка сервера: " + data.message);
+          // Якщо телефонів взагалі немає — малюємо прочерк
+          tdPhones.textContent = "—";
         }
-      })
-      .catch((error) => {
-        console.error("Кур'єр загубився в дорозі:", error);
-        alert("Не вдалося зв'язатися з сервером.");
+        tr.appendChild(tdPhones);
+
+        // --- 6. ЗБІРКА КОМІРКИ ЕМЕЙЛІВ (Стовпчик 6) ---
+        const tdEmails = document.createElement("td");
+        const emailsArr = cp.emails || [];
+
+        if (emailsArr.length > 0) {
+          // 1. ПЕРШИЙ ЕМЕЙЛ (Показуємо завжди)
+          const firstEmailDiv = document.createElement("span");
+          let firstText = emailsArr[0].email || "";
+          if (emailsArr[0].comment) firstText += ` (${emailsArr[0].comment})`;
+          firstEmailDiv.textContent = firstText;
+          tdEmails.appendChild(firstEmailDiv);
+
+          // 2. ЯКЩО Є ДОДАТКОВІ ЕМЕЙЛИ
+          if (emailsArr.length > 1) {
+            // Створюємо секретну коробку для решти емейлів і закриваємо її на замок
+            const hiddenBox = document.createElement("div");
+            hiddenBox.style.display = "none";
+            hiddenBox.style.marginTop = "4px";
+
+            // Конвеєр пакує всі інші емейли (починаючи з індексу 1) у секретну коробку
+            for (let i = 1; i < emailsArr.length; i++) {
+              const extraEmailDiv = document.createElement("div");
+              let extraText = emailsArr[i].email || "";
+
+              // ВИПРАВЛЕННЯ: замість " — " додаємо коментар у дужках
+              if (emailsArr[i].comment) {
+                extraText += ` (${emailsArr[i].comment})`;
+              }
+
+              extraEmailDiv.textContent = extraText;
+              extraEmailDiv.style.marginBottom = "4px";
+
+              hiddenBox.appendChild(extraEmailDiv);
+            }
+
+            // Кладемо секретну коробку в клітинку таблиці
+            tdEmails.appendChild(hiddenBox);
+
+            // 3. СТВОРЮЄМО КНОПКУ-ПОСИЛАННЯ ДЛЯ РОЗГОРТАННЯ
+            const toggleLink = document.createElement("a");
+            toggleLink.href = "#";
+            toggleLink.textContent = `...ще (${emailsArr.length - 1})`;
+            toggleLink.style.color = "#007bff";
+            toggleLink.style.textDecoration = "underline";
+            toggleLink.style.cursor = "pointer";
+            toggleLink.style.fontSize = "12px";
+            toggleLink.style.display = "inline-block"; // Стає в один рядок із текстом
+            toggleLink.style.marginLeft = "6px"; // Робить акуратний відступ зліва
+
+            // Наказуємо працівнику: "Стеж за кліком по посиланню!"
+            toggleLink.addEventListener("click", function (e) {
+              e.preventDefault(); // Забороняємо сторінці стрибати вгору
+
+              if (hiddenBox.style.display === "none") {
+                hiddenBox.style.display = "block"; // Змиваємо замок — показуємо все
+                toggleLink.textContent = "сховати";
+              } else {
+                hiddenBox.style.display = "none"; // Вішаємо замок назад
+                toggleLink.textContent = `...ще (${emailsArr.length - 1})`;
+              }
+            });
+
+            // Кладемо кнопку поруч із першим емейлом
+            tdEmails.appendChild(toggleLink);
+          }
+        } else {
+          // Якщо пошт взагалі немає — малюємо прочерк
+          tdEmails.textContent = "—";
+        }
+        tr.appendChild(tdEmails);
+
+        // 7. КОМІРКА АДРЕСИ ДОСТАВКИ (Стовпчик 7)
+        const tdAddress = document.createElement("td");
+        tdAddress.textContent = cp.address || cp.delivery_address || cp.counterparty_delivery_address || "";
+        tr.appendChild(tdAddress);
+
+        // 8. КОМІРКА НОТАТОК (Стовпчик 8)
+        const tdNotes = document.createElement("td");
+        tdNotes.textContent = cp.notes || cp.counterparty_notes || "";
+        tr.appendChild(tdNotes);
+
+        // ВИКЛАДКА НА ВІТРИНУ: відправляємо повністю зібраний рядок у таблицю
+        tbody.appendChild(tr);
       });
-  });
+    })
+    // Якщо кур'єр дорогою спіткнувся або сервер зламався — переходимо до аварійного плану
+    .catch((err) => {
+      // Записуємо детальну інформацію про аварію в наш спеціальний журнал дій
+      console.error("Помилка завантаження контрагентів:", err);
+    });
 }
 
 // ===========================================================================================
-// КУХОННИЙ КОМБАЙН: ЗАВАНТАЖЕННЯ СПИСКУ КОНТРАГЕНТІВ ІЗ СЕРВЕРА
+// Логіка для "Виділити все"
 // ===========================================================================================
-function loadCounterparties() {
-  // 1. Відправляємо кур'єра (fetch) на сервер за адресою /get_counterparties
-  fetch("/get_counterparties", {
-    method: "GET", // Просто просимо дати нам дані
+document.getElementById("checkbox_select_all_counterparties").addEventListener("change", function () {
+  const isChecked = this.checked;
+
+  // Знаходимо всі чекбокси контрагентів у таблиці
+  const allCounterpartyCheckboxes = document.querySelectorAll(".counterparty-checkbox");
+
+  // Встановлюємо стан для кожного чекбокса
+  allCounterpartyCheckboxes.forEach((cb) => {
+    cb.checked = isChecked;
+  });
+
+  // Оновлюємо стан кнопок (Видалити/Редагувати)
+  // Викликаємо подію 'change' для одного з чекбоксів, щоб спрацювала ваша логіка
+  if (allCounterpartyCheckboxes.length > 0) {
+    allCounterpartyCheckboxes[0].dispatchEvent(new Event("change"));
+  }
+});
+
+// ===========================================================================================
+// КОМАНДА ПРАЦІВНИКУ: РЕАГУВАТИ НА КНОПКУ "РЕДАГУВАТИ ВИДІЛЕНОГО" (ЛИШЕ НАЗВА)
+// ===========================================================================================
+document.getElementById("btn_edit_counterparty").addEventListener("click", function () {
+  // 1. Шукаємо активну галочку в нашій таблиці контрагентів
+  const checkedBox = document.querySelector(".counterparty-checkbox:checked");
+
+  if (!checkedBox) {
+    alert("Будь ласка, виберіть контрагента для редагування!");
+    return;
+  }
+
+  // 2. Витягуємо унікальний номер (ID) контрагента, який ТЕПЕР ТОЧНО ТАМ Є!
+  const counterpartyId = checkedBox.value;
+
+  // 3. Міняємо заголовок у нашому модальному вікні
+  document.getElementById("modal_counterparty_title").innerText = "Редагування контрагента";
+
+  // 4. Записуємо ID в секретну кишеню форми (атрибут data-edit-id)
+  document.getElementById("form_add_counterparty").setAttribute("data-edit-id", counterpartyId);
+
+  // 5. Відчиняємо модальне вікно (показуємо його на екрані)
+  document.getElementById("background_for_modal_window_counterparty").style.display = "flex";
+
+  // СВІЖИЙ ХІРУРГІЧНИЙ fetch ПІД ТВОЇ ФАЙЛИ:
+  fetch(`/get_counterparty/${counterpartyId}`)
+    .then((response) => {
+      if (!response.ok) throw new Error("Сервер відмовився видати дані");
+      return response.json();
+    })
+    .then((result) => {
+      console.log("Працівник: Отримав від сервера сейф:", result);
+
+      // Перевіряємо, чи Python прислав статус успіху і чи є всередині контрагент
+      if (result.status === "success" && result.counterparty) {
+        // Шукаємо коробку за її точним id="add_counterparty_name" з твого HTML
+        const nameInput = document.getElementById("input_counterparty_name");
+
+        if (nameInput) {
+          // Беремо назву з сейфа counterparty, який прислав Python
+          nameInput.value = result.counterparty.name || "";
+          console.log("Працівник: Назву контрагента успішно вписано в поле!");
+        } else {
+          console.error("Працівник: Не знайшов на формі елемент з id='add_counterparty_name'!");
+        }
+
+        // ТОЧКОВИЙ КРОК: Шукаємо коробку ЄДРПОУ за її ID з HTML
+        const edrpouInput = document.getElementById("input_counterparty_edrpou");
+        if (edrpouInput) {
+          // Дістаємо код ЄДРПОУ з сейфа counterparty й кладемо його в коробку
+          edrpouInput.value = result.counterparty.edrpou || "";
+          console.log("Працівник: Код ЄДРПОУ успішно вписано в поле!");
+        } else {
+          console.error("Працівник: Не знайшел на формі елемент з id='input_counterparty_edrpou'!");
+        }
+
+        // --- РОЗКЛАДАЄМО ІПН ---
+        const taxNumberInput = document.getElementById("input_counterparty_tax_number");
+        if (taxNumberInput) {
+          // Дістаємо податковий номер із сейфа й кладемо в коробку ІПН
+          taxNumberInput.value = result.counterparty.tax_number || "";
+          console.log("Працівник: Податковий номер (ІПН) успішно вписано в поле!");
+        } else {
+          console.error("Працівник: Не знайшов на формі елемент з id='input_counterparty_tax_number'!");
+        }
+
+        // --- РОЗКЛАДАЄМО ТЕЛЕФОНИ (ДИНАМІЧНИЙ СПИСОК) ---
+        const phoneContainer = document.getElementById("contacts_container");
+        if (phoneContainer) {
+          // 1. Повністю вичищаємо контейнер від старих полів, які там були
+          phoneContainer.innerHTML = "";
+
+          // Беремо список телефонів із сейфа (якщо там порожньо — створюємо порожній масив)
+          const phonesArr = result.counterparty.phones || [];
+
+          if (phonesArr.length === 0) {
+            // Якщо в базі взагалі немає телефонів, створюємо одне порожнє поле за замовчуванням
+            phoneContainer.innerHTML = `<div class="phone-input-group"><input type="text" name="counterparty_phones[]" placeholder="+380..." required></div>`;
+          } else {
+            // 2. Повторенням (циклом) перебираємо кожен телефон з бази
+            // Повторенням (циклом) перебираємо кожен контакт з бази
+            phonesArr.forEach((p, idx) => {
+              // 1. Створюємо головну коробку рядка і даємо їй магічні інструкції "Шеренги" (Flex)
+              const group = document.createElement("div");
+              group.className = "contact-row";
+              group.style.display = "flex";
+              group.style.gap = "15px";
+              group.style.marginBottom = "15px";
+              if (idx > 0) group.style.marginTop = "5px";
+
+              // 2. БЛОК ТЕЛЕФОНУ
+              const phoneBlock = document.createElement("div");
+              phoneBlock.className = "block_counterparty_contact";
+              phoneBlock.style.flex = "1";
+              phoneBlock.innerHTML = `<label>Телефон</label>`;
+
+              const inputPhone = document.createElement("input");
+              inputPhone.type = "tel";
+              inputPhone.className = "input_contact_phone";
+              inputPhone.name = "counterparty_phones[]";
+              inputPhone.placeholder = "+380...";
+              inputPhone.maxLength = 19;
+              inputPhone.value = p.phone || "";
+              if (idx === 0) inputPhone.required = true;
+
+              phoneBlock.appendChild(inputPhone);
+              group.appendChild(phoneBlock);
+
+              // 3. БЛОК ІМЕНІ
+              const nameBlock = document.createElement("div");
+              nameBlock.className = "block_counterparty_contact";
+              nameBlock.style.flex = "1";
+              nameBlock.innerHTML = `<label>Ім'я контактної особи</label>`;
+
+              const inputName = document.createElement("input");
+              inputName.type = "text";
+              inputName.className = "input_contact_name";
+              inputName.name = "counterparty_contact_names[]";
+              inputName.placeholder = "Ім'я особи";
+              inputName.value = p.name || "";
+
+              nameBlock.appendChild(inputName);
+              group.appendChild(nameBlock);
+
+              // 4. БЛОК ПОСАДИ
+              const roleBlock = document.createElement("div");
+              roleBlock.className = "block_counterparty_contact";
+              roleBlock.style.flex = "1";
+              roleBlock.innerHTML = `<label>Посада / коментар</label>`;
+
+              const inputRole = document.createElement("input");
+              inputRole.type = "text";
+              inputRole.className = "input_contact_role";
+              inputRole.name = "counterparty_contact_roles[]";
+              inputRole.placeholder = "Посада / Коментар";
+              inputRole.value = p.role || "";
+
+              roleBlock.appendChild(inputRole);
+              group.appendChild(roleBlock);
+
+              // Кнопка видалення "X" (чіпляємо її збоку, якщо це додатковий телефон)
+              if (idx > 0) {
+                const removeBtn = document.createElement("button");
+                removeBtn.type = "button";
+                removeBtn.className = "remove-phone-btn";
+                removeBtn.style.alignSelf = "flex-end"; // Вирівнюємо по нижньому краю інпутів
+                removeBtn.style.marginBottom = "5px";
+                removeBtn.style.backgroundColor = "#ff6b6b";
+                removeBtn.style.color = "white";
+                removeBtn.style.border = "none";
+                removeBtn.style.padding = "6px 10px";
+                removeBtn.style.cursor = "pointer";
+                removeBtn.style.borderRadius = "4px";
+                removeBtn.textContent = "X";
+
+                removeBtn.addEventListener("click", function () {
+                  group.remove();
+                });
+                group.appendChild(removeBtn);
+              }
+
+              // Закидаємо правильно зібраний рядок у контейнер контактів
+              phoneContainer.appendChild(group);
+            });
+
+            // --- РОЗКЛАДАЄМО ЕМЕЙЛИ (ДИНАМІЧНИЙ СПИСОК) ---
+            const emailContainer = document.getElementById("emails_container");
+            if (emailContainer) {
+              // 1. Повністю вичищаємо контейнер від старих рядків
+              emailContainer.innerHTML = "";
+
+              // Беремо список емейлів із сейфа сервера
+              const emailsArr = result.counterparty.emails || [];
+
+              if (emailsArr.length === 0) {
+                // Якщо в базі немає емейлів, створюємо один порожній за дефолтним HTML-кресленням
+                emailContainer.innerHTML = `
+              <div class="email-row" style="display: flex; gap: 15px; margin-bottom: 15px">
+                <div class="block_counterparty_contact" style="flex: 1">
+                  <label>Емейл</label>
+                  <input type="email" class="input_counterparty_email" name="contact_emails[]" />
+                </div>
+                <div class="block_counterparty_contact" style="flex: 1">
+                  <label>Призначення / коментар</label>
+                  <input type="text" class="input_counterparty_email_comment" name="contact_email_comments[]" />
+                </div>
+              </div>`;
+              } else {
+                // 2. Повторенням (циклом) перебираємо кожен емейл з бази
+                emailsArr.forEach((e, idx) => {
+                  // Створюємо головну коробку-рядок зі стилями "Шеренги" (Flex)
+                  const emailGroup = document.createElement("div");
+                  emailGroup.className = "email-row";
+                  emailGroup.style.display = "flex";
+                  emailGroup.style.gap = "15px";
+                  emailGroup.style.marginBottom = "15px";
+                  if (idx > 0) emailGroup.style.marginTop = "5px";
+
+                  // БЛОК ЕМЕЙЛУ
+                  const emailBlock = document.createElement("div");
+                  emailBlock.className = "block_counterparty_contact";
+                  emailBlock.style.flex = "1";
+                  emailBlock.innerHTML = `<label>Емейл</label>`;
+
+                  const inputEmail = document.createElement("input");
+                  inputEmail.type = "email";
+                  inputEmail.className = "input_counterparty_email";
+                  inputEmail.name = "contact_emails[]";
+                  inputEmail.value = e.email || ""; // Вставляємо реальний емейл!
+
+                  emailBlock.appendChild(inputEmail);
+                  emailGroup.appendChild(emailBlock);
+
+                  // БЛОК КОМЕНТАРЯ ДО ЕМЕЙЛУ
+                  const commentBlock = document.createElement("div");
+                  commentBlock.className = "block_counterparty_contact";
+                  commentBlock.style.flex = "1";
+                  commentBlock.innerHTML = `<label>Призначення / коментар</label>`;
+
+                  const inputComment = document.createElement("input");
+                  inputComment.type = "text";
+                  inputComment.className = "input_counterparty_email_comment";
+                  inputComment.name = "contact_email_comments[]";
+                  inputComment.value = e.comment || ""; // Вставляємо реальний коментар!
+
+                  commentBlock.appendChild(inputComment);
+                  emailGroup.appendChild(commentBlock);
+
+                  // Кнопка видалення "X" для другого і наступних емейлів
+                  if (idx > 0) {
+                    const removeEmailBtn = document.createElement("button");
+                    removeEmailBtn.type = "button";
+                    removeEmailBtn.className = "remove-phone-btn"; // Використовуємо твій готовий стиль кнопки
+                    removeEmailBtn.style.alignSelf = "flex-end";
+                    removeEmailBtn.style.marginBottom = "5px";
+                    removeEmailBtn.style.backgroundColor = "#ff6b6b";
+                    removeEmailBtn.style.color = "white";
+                    removeEmailBtn.style.border = "none";
+                    removeEmailBtn.style.padding = "6px 10px";
+                    removeEmailBtn.style.cursor = "pointer";
+                    removeEmailBtn.style.borderRadius = "4px";
+                    removeEmailBtn.textContent = "X";
+
+                    removeEmailBtn.addEventListener("click", function () {
+                      emailGroup.remove();
+                    });
+                    emailGroup.appendChild(removeEmailBtn);
+                  }
+
+                  // Закидаємо зібраний рядок у великий контейнер емейлів
+                  emailContainer.appendChild(emailGroup);
+                });
+
+                // --- РОЗКЛАДАЄМО АДРЕСУ ДОСТАВКИ ---
+                const deliveryInput = document.getElementById("input_counterparty_delivery_address");
+                if (deliveryInput) {
+                  deliveryInput.value = result.counterparty.delivery || "";
+                  console.log("Успіх: Адресу вписано в textarea!");
+                } else {
+                  console.warn("Помилка: Не знайдено textarea з ID 'input_counterparty_delivery_address'!");
+                }
+
+                const notesInput = document.getElementById("input_counterparty_notes");
+                if (notesInput) {
+                  notesInput.value = result.counterparty.notes || "";
+                  console.log("Успіх: Нотатки вписано в поле!");
+                } else {
+                  console.warn("Помилка: Не знайдено поле нотаток!");
+                }
+                document.getElementById("hidden_counterparty_id").value = counterpartyId;
+              }
+              console.log(`Працівник: Успішно вивів емейли на екран. Кількість: ${emailsArr.length}`);
+            } else {
+              console.error("Працівник: Не знайшов на формі контейнер id='emails_container'!");
+            }
+          }
+          console.log(`Працівник: Успішно вивів телефони на екран. Кількість: ${phonesArr.length}`);
+        } else {
+          console.error("Працівник: Не знайшов на формі жодного поля з класом .input_contact_phone!");
+        }
+      }
+    })
+    .catch((err) => {
+      console.error("Помилка завантаження деталей:", err);
+    });
+});
+
+// ===========================================================================================
+// Збереження форми редагування контрагента
+// ===========================================================================================
+
+const btnSubmitCounterparty = document.getElementById("btn_submit_counterparty");
+
+btnSubmitCounterparty.addEventListener("click", function (event) {
+  event.preventDefault(); // Це зупиняє стандартне оновлення сторінки
+  console.log("Кнопку натиснуто, починаємо збір даних..."); // Це допоможе нам в консолі перевірити, чи працює взагалі кнопка
+
+  // 1. Збираємо телефони
+  const contactPhoneRows = document.querySelectorAll("#contacts_container .contact-row");
+  const contactPhonetsList = [];
+  contactPhoneRows.forEach((row) => {
+    //Візьми список contactPhoneRows і для кожного рядка (row) в ньому виконай дії, описані далі
+    contactPhonetsList.push({
+      //Відкрий contactsList і додай у нього все що у фігурних
+
+      contact_phone: row.querySelector(".input_contact_phone").value.trim(), // У поточному рядку (row) знайди поле з класом .input_contact_phone, візьми його значення (value) і прибери зайві пробіли по краях (trim)
+      contact_name: row.querySelector(".input_contact_name").value.trim(),
+      contact_role: row.querySelector(".input_contact_role").value.trim(),
+    });
+  }); // Закрили цикл контактів
+
+  // 2. Збираємо емейли
+  const contactEmailRows = document.querySelectorAll("#emails_container .email-row");
+  const contactEmailsList = [];
+  contactEmailRows.forEach((row) => {
+    contactEmailsList.push({
+      contact_email: row.querySelector(".input_counterparty_email").value.trim(),
+      contact_email_comment: row.querySelector(".input_counterparty_email_comment").value.trim(),
+    });
+  }); // Закрили цикл емейлів
+
+  const finalDataEditCounterpaty = {
+    id: document.getElementById("hidden_counterparty_id").value,
+    name: document.getElementById("input_counterparty_name").value,
+    edrpou: document.getElementById("input_counterparty_edrpou").value,
+    tax_number: document.getElementById("input_counterparty_tax_number").value,
+    delivery: document.getElementById("input_counterparty_delivery_address").value,
+    notes: document.getElementById("input_counterparty_notes").value,
+    all_contacts_phone: contactPhonetsList,
+    all_contacts_emails: contactEmailsList,
+  };
+
+  fetch("/update_counterparty", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(finalDataEditCounterpaty),
   })
-    .then((response) => response.json()) // Чекаємо відповідь і розпаковуємо текстовий JSON у звичайний об'єкт
+    .then((res) => res.json())
     .then((data) => {
-      globalCounterparties = data.counterparties;
       if (data.status === "success") {
-        // Якщо сервер успішно віддав коробку з контрагентами —
-        // передаємо цей список нашому майбутньому будівельнику таблиці
-        renderCounterpartiesTable(data.counterparties);
+        if (data.new_id) document.getElementById("hidden_counterparty_id").value = data.new_id;
+        alert("Дані успішно збережено!");
       } else {
-        console.error("Сервер повернув помилку при завантаженні:", data.message);
+        // ЯКЩО СТАТУС "error" — ВИВОДИМО ТЕКСТ ПОМИЛКИ
+        alert("Помилка: " + data.message);
       }
     })
     .catch((error) => {
-      console.error("Кур'єр не зміг забрати контрагентів з сервера:", error);
+      // Всі інші види помилок пов'язані з сервером
+      console.error("Помилка:", error);
+      alert("Щось пішло не так на сервері!");
     });
-}
+});
 
 // ===========================================================================================
-// МАЙСТЕР-БУДІВЕЛЬНИК: МАЛЮЄМО ТАБЛИЦЮ КОНТРАГЕНТІВ З ГАЛОЧКАМИ ДЛЯ ВИДІЛЕННЯ
+// Видаленя контрагентів
 // ===========================================================================================
-function renderCounterpartiesTable(counterparties) {
-  // 1. Шукаємо порожнє депо (tbody) в нашій HTML-таблиці
-  const tableBody = document.getElementById("counterparties_table_body");
 
-  // Чистимо депо від старого мотлоху перед завантаженням нових рядків
-  tableBody.innerHTML = "";
-
-  // 2. Якщо склад порожній (фірм немає) — виводимо напис-підказку на всю ширину
-  if (counterparties.length === 0) {
-    tableBody.innerHTML = `
-            <tr>
-                <td colspan="8" style="text-align: center; padding: 15px;">
-                    Контрагентів поки що немає. Натисніть кнопку вище, щоб додати першого!
-                </td>
-            </tr>
-        `;
-    return; // Зупиняємо конвеєр, бо будувати нічого
-  }
-
-  // 3. Конвеєром перебираємо кожну картку фірми з надісланої сервером коробки
-  counterparties.forEach((cp) => {
-    // --- КРОК A: ГОТУЄМО КОНТЕЙНЕР ДЛЯ ТЕЛЕФОНІВ ---
-    let phonesHTML = "";
-    if (cp.phones && cp.phones.length > 0) {
-      const totalPhonesCount = cp.phones.length;
-
-      // УВАГА: Обов'язково ставимо тут знак рівності "="
-      phonesHTML = `
-                <div class="clickable-contact-box" data-id="${cp.id}" data-type="phones" style="cursor: pointer; color: #0066cc; display: inline-flex; align-items: center; gap: 5px; font-weight: bold; background-color: #e6f2ff; padding: 4px 8px; border-radius: 4px;">
-                    <span>📞</span>
-                    <span style="text-decoration: underline;">${totalPhonesCount}</span>
-                </div>
-            `;
-    } else {
-      phonesHTML = '<span style="color: #999;">Немає контактів</span>';
-    }
-
-    // --- КРОК Б: ГОТУЄМО КОНТЕЙНЕР ДЛЯ ЕМЕЙЛІВ ---
-    let emailsHTML = "";
-    if (cp.emails && cp.emails.length > 0) {
-      const firstEmail = cp.emails[0].email;
-      const extraCount = cp.emails.length - 1;
-      emailsHTML = `
-                <div class="clickable-contact-box" data-id="${cp.id}" data-type="emails" style="cursor: pointer; color: #0066cc; text-decoration: underline;">
-                    ${firstEmail} ${extraCount > 0 ? `(+${extraCount})` : ""}
-                </div>
-            `;
-    } else {
-      emailsHTML = "<span style='color: #999;'>Немає пошти</span>";
-    }
-
-    // --- КРОК В: ЗБИРАЄМО РЯДОК З ПЕРСОНАЛЬНОЮ ГАЛОЧКОЮ ---
-    const row = document.createElement("tr");
-
-    // Перша клітинка тепер тримає чекбокс. У його мітку value ми намертво зашиваємо ID контрагента!
-    row.innerHTML = `
-            <td style="padding: 10px; text-align: center;">
-                <input type="checkbox" class="checkbox_select_counterparty" value="${cp.id}" style="transform: scale(1.2); cursor: pointer;">
-            </td>
-            <td style="padding: 10px;">${cp.name}</td>
-            <td style="padding: 10px;">${cp.edrpou}</td>
-            <td style="padding: 10px;">${cp.tax_number || "-"}</td>
-            <td style="padding: 10px;">${phonesHTML}</td>
-            <td style="padding: 10px;">${emailsHTML}</td>
-            <td style="padding: 10px;">${cp.address || "-"}</td>
-            <td style="padding: 10px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${cp.notes || "-"}</td>
-        `;
-
-    // --- КРОК Г: ВИСТАВЛЯЄМО РЯДОК НА СТЕНД-ТАБЛИЦЮ ---
-    tableBody.appendChild(row);
-  });
-  setupCheckboxesLogic();
-}
-
-// ==========================================================================================================
-// КОНТРОЛЕР ГАЛОЧОК: КЕРУВАННЯ ВИДІЛЕННЯМ ТА ОНОВЛЕННЯ КНОПКИ ВИДАЛЕННЯ в таблиці відображення КОНТРАГЕНТІВ
-// ==========================================================================================================
-function setupCheckboxesLogic() {
-  const checkAll = document.getElementById("checkbox_select_all_counterparties");
-  const btnDelete = document.getElementById("btn_delete_selected_counterparties");
-
-  if (!checkAll || !btnDelete) return; // Якщо кнопок немає на складі — виходимо
-
-  // ПІДРАХУНОК: Кухонний комбайн, який рахує галочки та перефарбовує кнопку видалення
-  function updateDeleteButtonState() {
-    // Злітаємося на склад і збираємо всі виділені галочки контрагентів
-    const selectedCheckboxes = document.querySelectorAll(".checkbox_select_counterparty:checked");
-    const count = selectedCheckboxes.length;
-
-    // Оновлюємо текст на великій кнопці
-    btnDelete.innerText = `Видалити виділені (${count})`;
-
-    if (count > 0) {
-      // Якщо виділено хоча б одного — запалюємо кнопку синім/червоним кольором і вмикаємо її
-      btnDelete.disabled = false;
-      btnDelete.style.backgroundColor = "#ff4d4d"; // Колір самої кнопки
-      btnDelete.style.color = "white"; // Колір тексту на кнопці
-      btnDelete.style.cursor = "pointer"; // Курсор змінює вигляд на "pointer" коли курсор неведено на кнопку btnDelete
-    } else {
-      // Якщо все порожньо — гасимо кнопку назад у сірий колір і блокуємо
-      btnDelete.disabled = true;
-      btnDelete.style.backgroundColor = "#cccccc"; // Колір самої кнопки
-      btnDelete.style.color = "#666666"; // Колір тексту на кнопці
-      btnDelete.style.cursor = "default";
-    }
-  }
-
-  // ЛОГІКА ГОЛОВНОЇ ГАЛОЧКИ: При кліку в шапці виділяємо або гасимо ВСІ рядки
-  checkAll.addEventListener("change", function () {
-    const rowCheckboxes = document.querySelectorAll(".checkbox_select_counterparty");
-    rowCheckboxes.forEach((cb) => {
-      cb.checked = checkAll.checked; // Кожному рядку ставимо такий самий статус, як у головної галочки
-    });
-    updateDeleteButtonState(); // Перераховуємо касу
+// Знаходимо кнопку за її ID (перевірте, чи у вас саме цей ID в HTML)
+document.getElementById("btn_delete_counterparty").addEventListener("click", function () {
+  const selected = [];
+  // Збираємо всі вибрані чекбокси (переконайтеся, що вони мають клас 'checkbox')
+  document.querySelectorAll(".counterparty-checkbox:checked").forEach((cb) => {
+    selected.push(cb.value);
   });
 
-  // ЛОГІКА ОКРЕМІХ ГАЛОЧОК: Ловимо кліки на рівні всього депо-таблиці (делегація подій)
-  const tableBody = document.getElementById("counterparties_table_body");
-  if (tableBody) {
-    tableBody.addEventListener("change", function (e) {
-      // Якщо клікнули саме по галочці всередині якогось рядка
-      if (e.target.classList.contains("checkbox_select_counterparty")) {
-        // --- ОЦЕ НАШЕ ОНОВЛЕННЯ: Рахуємо прапорці при кожному кліку ---
-        const totalCount = document.querySelectorAll(".checkbox_select_counterparty").length;
-        const checkedCount = document.querySelectorAll(".checkbox_select_counterparty:checked").length;
-
-        // Команда для Головного прапорця: якщо кількість виділених дорівнює загальній кількості —
-        // галочка автоматично стає увімкненою (true), інакше — вимикається (false)
-        checkAll.checked = totalCount === checkedCount;
-
-        updateDeleteButtonState(); // Перераховуємо касу
-      }
-    });
+  if (selected.length === 0) {
+    alert("Виберіть хоча б одного контрагента для видалення!");
+    return;
   }
 
-  // ===========================================================================================
-  // НАКАЗ НА ВИДАЛЕННЯ: Вішаємо датчик кліку на велику червону кнопку
-  // ===========================================================================================
-  btnDelete.addEventListener("click", function () {
-    // 1. Збираємо всі галочки, які користувач виділив
-    const selectedCheckboxes = document.querySelectorAll(".checkbox_select_counterparty:checked");
-
-    // 2. Витягуємо з кожної галочки зашитий туди ID фірми й пакуємо в один чистий масив (коробку)
-    const idsToDelete = Array.from(selectedCheckboxes).map((cb) => parseInt(cb.value));
-
-    // 3. Питаємо у користувача підтвердження, щоб не видалити випадково
-    if (!confirm(`Ви впевнені, що хочете видалити вибраних контрагентів (${idsToDelete.length} шт.)?`)) {
-      return; // Якщо користувач натиснув "Скасувати" — зупиняємо процес
-    }
-
-    // 4. Відправляємо нашого кур'єра (fetch) на сервер Flask з валізою, де лежать ID
+  if (confirm("Ви впевнені, що хочете видалити вибраних контрагентів?")) {
     fetch("/delete_counterparties", {
-      method: "POST", // Метод доставки - посилка
-      headers: {
-        "Content-Type": "application/json", // Кажемо, що всередині JSON-текст
-      },
-      body: JSON.stringify({ ids: idsToDelete }), // Перетворюємо масив ID на текст
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: selected }),
     })
-      .then((response) => response.json()) // Розпаковуємо відповідь від сервера
+      .then((response) => response.json())
       .then((data) => {
         if (data.status === "success") {
-          alert(data.message); // Показуємо віконце: "Успішно видалено!"
-
-          // Знімаємо прапорець з головної галочки в шапці
-          checkAll.checked = false;
-
-          // Перезавантажуємо таблицю, щоб стерті фірми зникли з екрана
-          loadCounterparties();
+          alert(data.message);
+          location.reload(); // Перезавантажуємо сторінку для оновлення таблиці
         } else {
-          alert("Помилка видалення: " + data.message);
+          alert("Помилка: " + data.message);
         }
       })
-      .catch((error) => {
-        console.error("Кур'єр з наказом на видалення загубився:", error);
-        alert("Не вдалося зв'язатися з сервером для видалення.");
-      });
-  });
-}
-
-// ===========================================================================================
-// ЛОГІКА ДЛЯ ВІДКРИТТЯ МІНІ-ВІКНА З ТЕЛЕФОНАМИ
-// ===========================================================================================
-
-// 1. НАГЛЯДАЧ ЗА КЛІКАМИ: Стежимо за кліками всередині таблиці контрагентів
-document.getElementById("counterparties_table_body")?.addEventListener("click", function (event) {
-  // Перевіряємо, чи користувач клікнув саме на нашу синю коробку-плашку з телефонами
-  const targetBox = event.target.closest(".clickable-contact-box");
-  if (!targetBox || targetBox.getAttribute("data-type") !== "phones") return;
-
-  // Дістаємо з плашки унікальний ID фірми, на яку натиснули
-  const cpId = parseInt(targetBox.getAttribute("data-id"));
-
-  // Шукаємо цю фірму в загальній великій коробці globalCounterparties за її ID
-  const currentCP = globalCounterparties.find((item) => item.id === cpId);
-  if (!currentCP || !currentCP.phones) return;
-
-  // Звертаємося до працівника-контейнера всередині нашого міні-вікна
-  const modalContent = document.getElementById("modal_phones_list_content");
-
-  // Очищаємо контейнер від старих записів перед тим, як засипати туди нові номери
-  modalContent.innerHTML = "";
-
-  // Конвеєр ПОВТОРЕННЯ: Беремо кожен телефон фірми й малюємо його окремим рядком
-  currentCP.phones.forEach((p) => {
-    const phoneRow = document.createElement("div");
-    phoneRow.style.margin = "10px 0";
-    phoneRow.style.fontSize = "16px";
-
-    let contactText = "";
-
-    if (p.name) {
-      contactText += `${p.name}:  `;
-    }
-
-    if (contactText !== "") {
-      contactText += `${p.phone} `;
-    } else {
-      contactText += `<strong>Тел:</strong> ${p.phone}`;
-    }
-
-    if (p.role) {
-      contactText += ` (${p.role})`;
-    }
-
-    // 4. Заливаємо зібраний текст всередину нашого HTML-елемента
-    phoneRow.innerHTML = contactText;
-
-    // 5. Віддаємо готовий рядок працівнику-контейнеру
-    modalContent.appendChild(phoneRow);
-  });
-
-  // ЗНІМАЄМО ЗАМОК: Знаходимо велику ширму вікна і міняємо display: none на block (показуємо вікно)
-  document.getElementById("background_for_modal_window_phones").style.display = "block";
-});
-
-// 2. НАГЛЯДАЧ ЗА ХРЕСТИКОМ: Коли користувач тицяє на хрестик — вішаємо замок назад (ховаємо вікно)
-document.getElementById("btn_close_modal_view_phones")?.addEventListener("click", function () {
-  document.getElementById("background_for_modal_window_phones").style.display = "none";
-});
-
-// 3. НАГЛЯДАЧ ЗА ШИРМОЮ: Коли користувач клікає мимо вікна (на темне тло) — теж закриваємо вікно
-window.addEventListener("click", function (event) {
-  const modalBg = document.getElementById("background_for_modal_window_phones");
-  if (event.target === modalBg) {
-    modalBg.style.display = "none";
+      .catch((error) => console.error("Помилка:", error));
   }
 });
