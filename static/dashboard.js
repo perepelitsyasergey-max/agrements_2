@@ -30,17 +30,25 @@ const formAddCounterparty = document.getElementById("form_add_counterparty");
 // ===========================================================================================
 // ДІСТАЄМО з html ОБ'ЄКТИ ІЗ ВКЛАДКИ "КОНТРАГЕНТИ"
 // ===========================================================================================
-// Шукаємо кнопку "+ Додати контрагента"
+// Шукаємо кнопку "ДОДАТИ контрагента"
 const btnAddCounterparty = document.getElementById("btn_add_counterparty");
+// Шукаємо кнопку РЕДАГУВАТИ контрагента
+const btnEdit = document.getElementById("btn_edit_counterparty");
+// Шукаємо кнопку ВИДАЛИТИ контрагент
+const btnDelete = document.getElementById("btn_delete_counterparty");
 
 // ===========================================================================================
 // ДІСТАЄМО ОБ'ЄКТИ МОДАЛЬНОГО ВІКНА ДОДАТИ КОНТРАГЕНТА
 // ===========================================================================================
 
+//Витягуємо ЗАГОЛОВОК Модального вікна
+const modalCounterpartyTitle = document.getElementById("modal_counterparty_title");
 // Знаходимо прозорий темний фон, який обгортає наше біле вікно додавання контрагентів
 const backgroundForModalWindowCounterparty = document.getElementById("background_for_modal_window_counterparty");
 // Шукаємо кнопку-хрестик для закриття вікна додавання КОНТРАГЕНТА
 const btnCloseModalWindowCounterparty = document.getElementById("btn_close_modal_window_counterparty");
+// Шукаємо кнопку ЗБЕРЕГТИ
+const btnSubmitCounterparty = document.getElementById("btn_submit_counterparty");
 
 // ===========================================================================================
 // ДІСТАЄМО З HTML ПОЛЯ ВВЕДЕННЯ (ІНПУТИ) МОДАЛЬНОГО ВІКНА "ДОДАТИ КОНТРАГЕНТА"
@@ -112,9 +120,9 @@ btnTabLogs.addEventListener("click", function () {
 
 btnAddCounterparty.addEventListener("click", function () {
   // КОМАНДА ПРАЦІВНИКУ: Обов'язково міняємо головну вивіску (заголовок) вікна назад
-  document.getElementById("modal_counterparty_title").innerText = "Додавання нового контрагента";
+  modalCounterpartyTitle.innerText = "Додавання нового контрагента";
   // Очищаємо секретну кишеню форми від ID, щоб сервер знав, що ми створюємо новий запис, а не оновлюємо старий
-  document.getElementById("form_add_counterparty").removeAttribute("data-edit-id");
+  formAddCounterparty.removeAttribute("data-edit-id");
 
   // Перевіряємо, чи є взагалі головна форма на складі, і скидаємо її стандартний текст
   if (formAddCounterparty) {
@@ -451,30 +459,33 @@ if (btnAddMoreEmails && emailsContainer) {
 // ===========================================================================================
 // КОМАНДА ПРАЦІВНИКУ: РЕАГУВАТИ НА КНОПКУ "РЕДАГУВАТИ ВИДІЛЕНОГО"
 // ===========================================================================================
-document.getElementById("btn_edit_counterparty").addEventListener("click", function () {
-  // 1. Шукаємо всі активні галочки в нашій таблиці
-  const checkedBoxes = document.querySelectorAll(".counterparty-checkbox:checked");
 
-  // Безпека: якщо чомусь вибрано не один рядок, зупиняємо конвеєр
-  if (checkedBoxes.length !== 1) {
-    alert("Будь ласка, виберіть рівно одного контрагента для редагування!");
-    return;
-  }
+// Тимчасово коментуємо, бо наче цей код дублюється
 
-  // 2. Витягуємо ID контрагента з нашої коробки (зберігається в атрибуті data-id галочки)
-  const counterpartyId = checkedBoxes[0].getAttribute("data-id");
+// document.getElementById("btn_edit_counterparty").addEventListener("click", function () {
+//   // 1. Шукаємо всі активні галочки в нашій таблиці
+//   const checkedBoxes = document.querySelectorAll(".counterparty-checkbox:checked");
 
-  // 3. Міняємо заголовок у нашому модальному вікні на правильний напис
-  document.getElementById("modal_counterparty_title").innerText = "Редагування контрагента";
+//   // Безпека: якщо чомусь вибрано не один рядок, зупиняємо конвеєр
+//   if (checkedBoxes.length !== 1) {
+//     alert("Будь ласка, виберіть рівно одного контрагента для редагування!");
+//     return;
+//   }
 
-  // 4. Записуємо ID в секретну кишеню форми, щоб вона знала, що ми саме РЕДАГУЄМО, а не створюємо
-  document.getElementById("form_add_counterparty").setAttribute("data-edit-id", counterpartyId);
+//   // 2. Витягуємо ID контрагента з нашої коробки (зберігається в атрибуті data-id галочки)
+//   const counterpartyId = checkedBoxes[0].getAttribute("data-id");
 
-  // 5. Показуємо модальне вікно (піднімаємо завісу)
-  document.getElementById("background_for_modal_window_counterparty").style.display = "flex";
+//   // 3. Міняємо заголовок у нашому модальному вікні на правильний напис
+//   document.getElementById("modal_counterparty_title").innerText = "Редагування контрагента";
 
-  console.log("Працівник: Готуємося редагувати контрагента з ID:", counterpartyId);
-});
+//   // 4. Записуємо ID в секретну кишеню форми, щоб вона знала, що ми саме РЕДАГУЄМО, а не створюємо
+//   document.getElementById("form_add_counterparty").setAttribute("data-edit-id", counterpartyId);
+
+//   // 5. Показуємо модальне вікно (піднімаємо завісу)
+//   document.getElementById("background_for_modal_window_counterparty").style.display = "flex";
+
+//   console.log("Працівник: Готуємося редагувати контрагента з ID:", counterpartyId);
+// });
 
 // ===========================================================================================
 // ФУНКЦІЯ ЗАВАНТАЖЕННЯ КОНТРАГЕНТІВ ТА НАПОВНЕННЯ ТАБЛИЦІ
@@ -486,12 +497,27 @@ function loadCounterparties() {
     .then((res) => res.json())
     // Коли дані успішно розпаковані, беремо цей чистий об'єкт (data) у руки
     .then((data) => {
+      // ПЕРЕВІРКА СТАТУСУ ВІД СЕРВЕРА
+      if (!data || data.status !== "success") {
+        console.error("Сервер повернув помилку або статус не успішний:", data);
+        alert(data.message || "Помилка завантаження даних");
+        return;
+      }
       // Звертаємося до масиву всередині об'єкта: data.counterparties
       if (!data || !data.counterparties) {
         console.error("Сервер повернув дані без масиву контрагентів:", data);
         return;
       }
-
+      // *
+      //   *
+      //   * *
+      //   * *
+      //   * *
+      //   * *
+      //   * *
+      //   * *
+      //   * *
+      //   * * Наступна змінна наче не використовується
       // Кладемо отриманий масив у велику спільну коробку для зберігання на складі
       globalCounterparties = data.counterparties;
 
@@ -518,8 +544,6 @@ function loadCounterparties() {
         // ОНОВЛЕНИЙ ОБРОБНИК ПОДІЙ:
         chk.addEventListener("change", function () {
           const checkedBoxes = document.querySelectorAll(".counterparty-checkbox:checked");
-          const btnDelete = document.getElementById("btn_delete_counterparty");
-          const btnEdit = document.getElementById("btn_edit_counterparty");
 
           // Керування кнопкою видалення
           if (checkedBoxes.length > 0) {
@@ -549,6 +573,12 @@ function loadCounterparties() {
 
         tdCheck.appendChild(chk);
         tr.appendChild(tdCheck);
+
+        // КОМІРКА ID (Новий стовпчик 2)
+        const tdId = document.createElement("td");
+        tdId.textContent = cp.id || "";
+        tdId.style.textAlign = "center"; // Робимо ID по центру (за бажанням)
+        tr.appendChild(tdId);
 
         // 2. КОМІРКА НАЗВИ (Стовпчик 2)
         const tdName = document.createElement("td");
@@ -772,9 +802,9 @@ document.getElementById("checkbox_select_all_counterparties").addEventListener("
 });
 
 // ===========================================================================================
-// КОМАНДА ПРАЦІВНИКУ: РЕАГУВАТИ НА КНОПКУ "РЕДАГУВАТИ ВИДІЛЕНОГО" (ЛИШЕ НАЗВА)
+// ЛОГІКА РОБОТИ КНОПКИ "РЕДАГУВАТИ ВИДІЛЕНОГО" КОНТРАГЕНТА
 // ===========================================================================================
-document.getElementById("btn_edit_counterparty").addEventListener("click", function () {
+btnEdit.addEventListener("click", function () {
   // 1. Шукаємо активну галочку в нашій таблиці контрагентів
   const checkedBox = document.querySelector(".counterparty-checkbox:checked");
 
@@ -787,13 +817,13 @@ document.getElementById("btn_edit_counterparty").addEventListener("click", funct
   const counterpartyId = checkedBox.value;
 
   // 3. Міняємо заголовок у нашому модальному вікні
-  document.getElementById("modal_counterparty_title").innerText = "Редагування контрагента";
+  modalCounterpartyTitle.innerText = "Редагування контрагента";
 
   // 4. Записуємо ID в секретну кишеню форми (атрибут data-edit-id)
-  document.getElementById("form_add_counterparty").setAttribute("data-edit-id", counterpartyId);
+  formAddCounterparty.setAttribute("data-edit-id", counterpartyId);
 
   // 5. Відчиняємо модальне вікно (показуємо його на екрані)
-  document.getElementById("background_for_modal_window_counterparty").style.display = "flex";
+  backgroundForModalWindowCounterparty.style.display = "flex";
 
   // СВІЖИЙ ХІРУРГІЧНИЙ fetch ПІД ТВОЇ ФАЙЛИ:
   fetch(`/get_counterparty/${counterpartyId}`)
@@ -806,7 +836,7 @@ document.getElementById("btn_edit_counterparty").addEventListener("click", funct
 
       // Перевіряємо, чи Python прислав статус успіху і чи є всередині контрагент
       if (result.status === "success" && result.counterparty) {
-        // Шукаємо коробку за її точним id="add_counterparty_name" з твого HTML
+        // Шукаємо коробку за її точним id="add_counterparty_name" з HTML
         const nameInput = document.getElementById("input_counterparty_name");
 
         if (nameInput) {
@@ -1059,10 +1089,8 @@ document.getElementById("btn_edit_counterparty").addEventListener("click", funct
 });
 
 // ===========================================================================================
-// Збереження форми редагування контрагента
+// ЛОГІКА ДІЇ КНОПКИ "ЗБЕРЕГТИ" КОНТРАГЕНТА
 // ===========================================================================================
-
-const btnSubmitCounterparty = document.getElementById("btn_submit_counterparty");
 
 btnSubmitCounterparty.addEventListener("click", function (event) {
   event.preventDefault(); // Це зупиняє стандартне оновлення сторінки
@@ -1126,11 +1154,11 @@ btnSubmitCounterparty.addEventListener("click", function (event) {
 });
 
 // ===========================================================================================
-// Видаленя контрагентів
+// ЛОГІКА ДІЇ КНОПКИ "ВИДАЛИТИ" КОНТРАГЕНТА
 // ===========================================================================================
 
 // Знаходимо кнопку за її ID (перевірте, чи у вас саме цей ID в HTML)
-document.getElementById("btn_delete_counterparty").addEventListener("click", function () {
+btnDelete.addEventListener("click", function () {
   const selected = [];
   // Збираємо всі вибрані чекбокси (переконайтеся, що вони мають клас 'checkbox')
   document.querySelectorAll(".counterparty-checkbox:checked").forEach((cb) => {

@@ -1,11 +1,11 @@
 <mxfile host="Electron">
   <diagram name="Сторінка-1" id="imZyNBZz9EkNLCh440zw">
-    <mxGraphModel dx="1685" dy="2940" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2039" dy="3187" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="xLQqsGP4wDbx-OHAPbiL-48" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;align=left;verticalAlign=top;" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;b&gt;&lt;font style=&quot;font-size: 26px;&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; БАЗА ДАНИХ&lt;/font&gt;&lt;/b&gt;" vertex="1">
-          <mxGeometry height="1230" width="1813" x="-340" y="-370" as="geometry" />
+          <mxGeometry height="1230" width="1890" x="-340" y="-370" as="geometry" />
         </mxCell>
         <mxCell id="xLQqsGP4wDbx-OHAPbiL-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;align=left;spacingLeft=5;" value="Контрагенти:&lt;div&gt;&lt;br&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;1. Назва / Ім&#39;я&lt;/div&gt;&lt;div&gt;2. ЄДРПОУ / ІПН&lt;/div&gt;&lt;div&gt;3. Податковий номер&lt;/div&gt;&lt;div&gt;4. Контакти (&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;тел.,&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;ім&#39;я,&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;посада)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;5. Емейл,&lt;/div&gt;&lt;div&gt;6. Нова пошта&lt;/div&gt;&lt;/div&gt;&lt;div&gt;7. Нотатки&lt;/div&gt;" vertex="1">
           <mxGeometry height="220" width="180" x="-37" y="-30" as="geometry" />
@@ -114,7 +114,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="xLQqsGP4wDbx-OHAPbiL-56" parent="1" style="rounded=1;whiteSpace=wrap;html=1;spacingLeft=5;labelBackgroundColor=none;labelBorderColor=none;arcSize=7;" value="&lt;div style=&quot;font-size: 16px; text-align: left;&quot;&gt;Контейнер для декількох товарів у специфікації&lt;/div&gt;&lt;div style=&quot;font-size: 16px; text-align: left;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 16px; text-align: left;&quot;&gt;1. Назва товару (вибирається із випадаючого списку з таблиці товари, з подальшою можливістю написання власного варіанту назви товару)&lt;/div&gt;&lt;div style=&quot;font-size: 16px; text-align: left;&quot;&gt;2. Ціна (виконавець прописує вручну)&lt;/div&gt;&lt;div style=&quot;font-size: 16px; text-align: left;&quot;&gt;3. Кількість&lt;/div&gt;&lt;div style=&quot;font-size: 16px; text-align: left;&quot;&gt;4. Заг. вартісь&lt;/div&gt;&lt;div style=&quot;font-size: 16px; text-align: left;&quot;&gt;5. В т.ч. ПДВ (%) За замовчуванням ПДВ стоїть 20%, але користувач може змінити цей показник. Паралельно буде поруч стояти галочка &quot;без ПДВ&quot;. В такому разі дане поле для ПДВ стає неактивним.&lt;/div&gt;" vertex="1">
-          <mxGeometry height="260" width="410" x="1036" y="520" as="geometry" />
+          <mxGeometry height="260" width="410" x="1090" y="540" as="geometry" />
         </mxCell>
         <mxCell id="xLQqsGP4wDbx-OHAPbiL-58" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.124;entryY=0.01;entryDx=0;entryDy=0;entryPerimeter=0;" target="xLQqsGP4wDbx-OHAPbiL-56">
           <mxGeometry relative="1" as="geometry">

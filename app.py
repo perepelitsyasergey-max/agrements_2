@@ -207,7 +207,9 @@ def login():
     return render_template('login.html') # Якщо просто відкрили сторінку - показуємо форму
 
 
-# НОВИЙ МАРШРУТ: ГОЛОВНИЙ КАБІНЕТ (DASHBOARD)
+# -------------------------------------------------------------------------------------------
+# МАРШРУТ: ГОЛОВНИЙ КАБІНЕТ (DASHBOARD)
+# -------------------------------------------------------------------------------------------
 @app.route('/dashboard')
 def dashboard():
     # Перевіряємо «перепустку»: якщо користувач не входив — повертаємо на прохідну
@@ -302,7 +304,7 @@ def get_counterparties():
 # -------------------------------------------------------------------------------------------
 # МАРШРУТ: ВИДАЧА ДАНИХ ОДНОГО КОНТРАГЕНТА ДЛЯ РЕДАГУВАННЯ
 # -------------------------------------------------------------------------------------------
-@app.route('/get_counterparty/<int:cp_id>', methods=['GET'])
+@app.route('/get_counterparty/<int:cp_id>', methods=['GET']) # <int:cp_id> - це це назва змінної (її ти придумав сам), куди Flask автоматично покладе унікальний номер (ID) контрагента, на якого ти клікнув у браузері
 def get_counterparty(cp_id):
     # Перевіряємо «перепустку» користувача
     if 'user_id' not in session:
@@ -351,10 +353,6 @@ def get_counterparty(cp_id):
         print(f"Помилка при отриманні контрагента ID {cp_id}: {e}")
         return {"status": "error", "message": f"Внутрішня помилка сервера: {str(e)}"}, 500
     
-
-
-
-
 
 # -------------------------------------------------------------------------------------------
 # МАРШРУТ: МАСОВЕ ВИДАЛЕННЯ ОБРАНИХ КОНТРАГЕНТІВ ТА ЇХНІХ КОНТАКТІВ
@@ -412,52 +410,74 @@ def delete_counterparties():
 # -------------------------------------------------------------------------------------------
 @app.route('/update_counterparty', methods=['POST'])
 def update_counterparty():
-    data = request.get_json()
-    cp_id = data.get('id')
+    data = request.get_json() # це команда, яка приймає посилку від браузера, розпаковує її та перетворює на звичайний Python-словник (об'єкт з ключами та значеннями)
+    cp_id = data.get('id') # дістаємо з нашої «розпакованої посилки» (data) унікальний номер (ID) контрагента і записує його в змінну cp_id
     edrpou = data.get('edrpou')
 
     # 1. ПЕРЕВІРКА НА ДУБЛЬ
     if edrpou and str(edrpou).strip():
         # Шукаємо контрагента з таким ЄДРПОУ, який НЕ є поточним контрагентом
-        existing = Counterparty.query.filter_by(counterparty_edrpou=edrpou).first()
+        existing_edrpou = Counterparty.query.filter_by(counterparty_edrpou=edrpou).first()
         
         # Якщо знайшли когось з таким ЄДРПОУ, і це НЕ той ID, що ми редагуємо
-        if existing and str(existing.counterparty_id) != str(cp_id):
+        if existing_edrpou and str(existing_edrpou.counterparty_id) != str(cp_id):
             return {
                 "status": "error", 
-                "message": f"Контрагент з ЄДРПОУ {edrpou} вже існує ({existing.counterparty_name}). Відкрийте його картку для редагування."
+                "message": f"Контрагент з ЄДРПОУ {edrpou} вже існує ({existing_edrpou.counterparty_name}). Відкрийте його картку для редагування."
             }, 409 # 409 Conflict — спеціальний код помилки для таких випадків
     
-    # 1-3. Логіка пошуку та оновлення основних полів (залишається без змін)
+    
+    # Спочатку беремо порожню руку (чистий аркуш) і кажемо, що у нас поки що немає жодного контрагента
     cp = None
+    
+    # СЦЕНАРІЙ 1: Якщо браузер передав нам унікальний ID (номер) контрагента
     if cp_id and str(cp_id).strip():
+        # Відкриваємо головну шафу з базою даних і дістаємо звідти вже існуючу картку за цим номером
         cp = Counterparty.query.get(cp_id)
+        
+    # СЦЕНАРІЙ 2: Якщо за ID нікого не знайшли (або ID не було), але користувач написав код ЄДРПОУ
     if not cp and edrpou:
+        # Шукаємо в базі: а чи немає у нас вже якоїсь картки з точно таким самим кодом ЄДРПОУ?
         cp = Counterparty.query.filter_by(counterparty_edrpou=edrpou).first()
+        
+    # СЦЕНАРІЙ 3: Якщо ми обішли всі шафи, але картку так і не знайшли (це абсолютно нова фірма)
     if not cp:
+        # Беремо абсолютно чистий, новий бланк для заповнення даних контрагента
         cp = Counterparty()
+        # Кладемо цей новий бланк на стіл бази даних, щоб вона приготувала для нього нове місце
         db.session.add(cp)
     
-    cp.counterparty_name = data.get('name')
-    cp.counterparty_edrpou = edrpou
+    cp.counterparty_name = data.get('name')  # Беремо назву фірми, яку користувач ввів у форму, і записуємо її в рядок «Назва» нашого бланка
+    cp.counterparty_edrpou = edrpou          
     cp.counterparty_tax_number = data.get('tax_number')
     cp.counterparty_delivery_address = data.get('delivery')
     cp.counterparty_notes = data.get('notes')
     
-    db.session.flush() 
+    db.session.flush() # Це команда, яка змушує базу даних тимчасово «прийняти» зміни та нарородити унікальний ID для нашого нового контрагента, але при цьому ще не записує дані наглухо в пам'ять.
     
     # 4. Оновлюємо контакти (телефони/імена)
     CounterpartyContact.query.filter_by(counterparty_id=cp.counterparty_id).delete()
-    for c in data.get("all_contacts_phone", []):
-        db.session.add(CounterpartyContact(
-            counterparty_id=cp.counterparty_id,
-            contact_phone=c.get("contact_phone"),
+    for c in data.get("all_contacts_phone", []): # Беремо надісланий із браузера список телефонів і починає перебирати їх по черзі, один за одним, щоб записати в базу даних
+                                                 # data.get("all_contacts_phone", []) — ми звертаємося до нашої розпакованої посилки data і просимо дати нам список телефонів, який JavaScript назвав словом "all_contacts_phone"
+                                                 # [] (порожні квадратні дужки) — це знову наш улюблений захист від падіння програми. Якщо користувач не ввів жодного телефону (поле залишилося порожнім), метод .get() замість помилки поверне цей порожній список []
+        
+        
+        # Cтворюємо новий запис для таблиці контактів у пам'яті Python і дає команду базі даних: «Приготуй цей телефон до збереження!»
+        db.session.add(CounterpartyContact(  # CounterpartyContact(...) — це виклик нашої моделі (шаблону) з файлу models.py. Ми беремо новий чистий бланк для телефона і заповнюємо його поля тими даними, які лежать у нашій змінній c
+                                             # db.session.add(...) — бере цей щойно заповнений бланк і кладе його на стіл до бази даних (додає в поточну сесію)
+
+            counterparty_id=cp.counterparty_id,     # Встановлюємо зв'язок. «Пришиваємо» поточний телефон до нашого конкретного контрагента
+                                                    # Знак дорівнює (=) тут працює як заповнення конкретного поля на бланку телефона:
+                                                        # counterparty_id (ліворуч) — це назва поля в таблиці контактів (внутрішній ярлик телефона)
+                                                        # cp.counterparty_id (праворуч) — це той самий унікальний номер (ID) нашого контрагента, який база даних щойно згенерувала для нас завдяки команді db.session.flush()
+            
+            contact_phone=c.get("contact_phone"),   # Беремо безпосередньо сам номер телефону з поточної картки c і вписуємо його у відповідне поле бланка контактів
             contact_name=c.get("contact_name"),
             contact_role=c.get("contact_role")
             # Емейли прибрали звідси
         ))
 
-    # 5. НОВИЙ БЛОК: Оновлюємо емейли
+    # 5. Оновлюємо емейли
     CounterpartyEmail.query.filter_by(counterparty_id=cp.counterparty_id).delete()
     for e in data.get("all_contacts_emails", []):
         db.session.add(CounterpartyEmail(
@@ -467,7 +487,10 @@ def update_counterparty():
         ))
         
     db.session.commit()
-    return {"status": "success", "new_id": cp.counterparty_id}, 200
+    return {"status": "success", "new_id": cp.counterparty_id}, 200     # відповідб повертаємо в js
+
+
+
 if __name__ == '__main__':
     # Створюємо таблиці в базі даних автоматично при першому запуску
     with app.app_context():
