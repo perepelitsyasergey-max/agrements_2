@@ -63,20 +63,20 @@
 
             <div id="box_for_counterparties_list">
               <div class="table-container" style="margin-top: 15px">
-                <table border="1" style="width: 100%; border-collapse: collapse; text-align: left">
+                <table id="table_for_counterpaties" border="1">
                   <thead>
                     <tr style="background-color: #f2f2f2">
                       <th style="padding: 10px; text-align: center; width: 40px">
                         <input type="checkbox" id="checkbox_select_all_counterparties" style="transform: scale(1.2); cursor: pointer" />
                       </th>
-                      <th style="padding: 10px">ID</th>
-                      <th style="padding: 10px">Назва контрагента</th>
-                      <th style="padding: 10px">ЄДРПОУ / ІПН</th>
-                      <th style="padding: 10px">Податковий номер</th>
-                      <th style="padding: 10px">Телефони / Контакти</th>
-                      <th style="padding: 10px">Емейли</th>
-                      <th style="padding: 10px">Адреса доставки</th>
-                      <th style="padding: 10px">Нотатки</th>
+                      <th style="padding: 10px; width: 2%">ID</th>
+                      <th style="padding: 10px; width: 10%">Назва контрагента</th>
+                      <th style="padding: 10px; width: 4%">ЄДРПОУ / ІПН</th>
+                      <th style="padding: 10px; width: 5%">Податковий номер</th>
+                      <th style="padding: 10px; width: 20%">Телефони / Контакти</th>
+                      <th style="padding: 10px; width: 19%">Емейли</th>
+                      <th style="padding: 10px; width: 16%">Адреса доставки</th>
+                      <th style="padding: 10px; width: 15%">Нотатки</th>
                     </tr>
                   </thead>
                   <tbody id="counterparties_table_body"></tbody>
@@ -109,7 +109,7 @@
     <!----------------------------------------------------------------------------------------------->
 
     <!----------------------------------------------------------------------------------------------->
-    <!------ Модальнt вікно ADD КОНТРАГЕНТ -->
+    <!------ Модальне вікно ADD КОНТРАГЕНТ -->
     <!----------------------------------------------------------------------------------------------->
     <div id="background_for_modal_window_counterparty" class="background_for_modal_window" style="display: none">
       <div id="modal_window_counterparty" class="modal_window">

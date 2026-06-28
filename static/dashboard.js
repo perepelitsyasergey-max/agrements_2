@@ -153,133 +153,89 @@ btnCloseModalWindowCounterparty.addEventListener("click", function () {
 });
 
 // ===========================================================================================
-// ЛОГІКА ВВЕДЕННЯ ТА СТИРАННЯ НОМЕРУ ТЕЛЕФОНУ
+// УНІВЕРСАЛЬНА ФУНКЦІЯ МАСКИ ТЕЛЕФОНУ (ІДЕАЛЬНЕ СТИРАННЯ)
 // ===========================================================================================
-
-if (phoneInput) {
-  // Якщо курсор стоїть у полі введення, відразу прописуємо +380
-  phoneInput.addEventListener("focus", function (e) {
-    if (!e.target.value) e.target.value = "+380 ";
-  });
-  // 1. НАДІЙНИЙ СТАРТИЙ СОРТУВАЛЬНИК (Твоя перша версія)
-  phoneInput.addEventListener("input", function (e) {
-    let inputStr = e.target.value;
-
-    // Очищаємо рядок: залишаємо ТІЛЬКИ цифри
-    let digits = inputStr.replace(/\D/g, "");
-
-    // Зрізаємо префікси, щоб не дублювалися
-    if (digits.startsWith("380")) {
-      digits = digits.substring(3);
-    } else if (digits.startsWith("0")) {
-      digits = digits.substring(1);
-    }
-
-    // Обмежуємо довжину чистого номера до 9 цифр
-    digits = digits.substring(0, 9);
-
-    // Збираємо красиве лекало
-    let formatted = "";
-    if (digits.length > 0) {
-      formatted = "+380 (" + digits.substring(0, 2);
-      if (digits.length >= 2) {
-        formatted += ") ";
+function initPhoneMask() {
+  // 1. ПОДІЯ FOCUS: автоматично підставляємо префікс, якщо поле порожнє
+  document.addEventListener("focusin", function (e) {
+    if (e.target && e.target.classList.contains("input_contact_phone")) {
+      if (!e.target.value) {
+        e.target.value = "+380 ";
       }
     }
-    if (digits.length > 2) {
-      formatted += digits.substring(2, 5);
-    }
-    if (digits.length > 5) {
-      formatted += "-" + digits.substring(5, 7);
-    }
-    if (digits.length > 7) {
-      formatted += "-" + digits.substring(7, 9);
-    }
-
-    // Повертаємо результат у поле
-    e.target.value = formatted;
   });
 
-  // 2. ВАЖІЛЬ ДЛЯ КНОПКИ BACKSPACE (Дозволяє все стерти строго до +380)
-  phoneInput.addEventListener("keydown", function (e) {
-    let val = e.target.value;
-
-    if (e.key === "Backspace") {
-      // Якщо на екрані залишилася конструкція "+380 (96)" (довжина 10) або "+380 (9)" (довжина 9)
-      // і користувач хоче її стерти — ми допомагаємо йому зрізати дужку без заклинювання курсора
-      if (val.length === 10 || val.length === 9) {
-        e.preventDefault(); // Зупиняємо стандартний затик браузера
-
-        let digits = val.replace(/\D/g, "");
-        if (digits.startsWith("380")) digits = digits.substring(3);
-
-        // Викидаємо одну цифру з кінця вручну
-        digits = digits.substring(0, digits.length - 1);
-
-        // Оновлюємо поле
-        if (digits.length > 0) {
-          e.target.value = "+380 (" + digits;
-        } else {
-          e.target.value = "+380 ";
-        }
+  // 2. ПОДІЯ INPUT: форматуємо ТІЛЬКИ при додаванні цифр
+  document.addEventListener("input", function (e) {
+    if (e.target && e.target.classList.contains("input_contact_phone")) {
+      // КРИТИЧНИЙ ЗАХИСТ: Якщо користувач стирає (натиснув Backspace або Delete) — повністю виходимо
+      if (e.inputType && (e.inputType.startsWith("delete") || e.inputType === "deleteContentBackward")) {
         return;
       }
 
-      // Захист межі: якщо на екрані залишилося тільки "+380 " або "+380", забороняємо прати далі
-      if (val.length <= 6) {
-        e.preventDefault();
-        e.target.value = "+380 "; // Насильно тримаємо цю базу
+      let input = e.target;
+      let val = input.value;
+
+      // Очищаємо рядок від усього, крім цифр
+      let digits = val.replace(/\D/g, "");
+
+      // Якщо цифр замало, не заважаємо
+      if (digits.length <= 3) {
+        if (digits.length === 0) input.value = "";
+        else input.value = "+" + digits;
+        return;
+      }
+
+      // Нормалізуємо введення з нуля
+      if (!digits.startsWith("380")) {
+        if (digits.startsWith("0")) digits = "38" + digits;
+        else digits = "380" + digits;
+      }
+
+      // Обмежуємо довжину (380 + 9 цифр номера)
+      digits = digits.substring(0, 12);
+
+      // Будуємо маску строго покроково
+      let formatted = "+380";
+
+      if (digits.length > 3) {
+        let code = digits.substring(3, 5);
+        formatted += " (" + code;
+      }
+      if (digits.length > 5) {
+        let part1 = digits.substring(5, 8);
+        formatted += ") " + part1;
+      }
+      if (digits.length > 8) {
+        let part2 = digits.substring(8, 10);
+        formatted += "-" + part2;
+      }
+      if (digits.length > 10) {
+        let part3 = digits.substring(10, 12);
+        formatted += "-" + part3;
+      }
+
+      input.value = formatted;
+    }
+  });
+
+  // 3. ПОДІЯ BLUR: якщо вийшли з поля і там тільки префікс — очищаємо повністю
+  document.addEventListener("focusout", function (e) {
+    if (e.target && e.target.classList.contains("input_contact_phone")) {
+      let val = e.target.value.trim();
+      let digits = val.replace(/\D/g, "");
+      if (digits.length <= 3) {
+        e.target.value = "";
       }
     }
   });
-
-  // 1. НАДІЙНИЙ СОРТУВАЛЬНИК (Тепер повністю захищений від нуля попереду)
-  phoneInput.addEventListener("input", function (e) {
-    let inputStr = e.target.value;
-
-    // Очищаємо рядок: залишаємо ТІЛЬКИ цифри
-    let digits = inputStr.replace(/\D/g, "");
-
-    // Спочатку перевіряємо і зрізаємо міжнародний префікс "380"
-    if (digits.startsWith("380")) {
-      digits = digits.substring(3);
-    }
-
-    // МАГІЧНЕ ВИПРАВЛЕННЯ: якщо після зрізання 380 (або якщо користувач просто почав писати 096...)
-    // першою цифрою йде нуль — ми ЙОГО НЕГАЙНО ВИКИДАЄМО! Тому що нуль уже закладений у нашому "+380"
-    if (digits.startsWith("0")) {
-      digits = digits.substring(1);
-    }
-
-    // Тепер у нас в пам'яті чисті 9 цифр коду та номера (наприклад: 966456329)
-    digits = digits.substring(0, 9);
-
-    // Збираємо красиве лекало
-    let formatted = "+380 ";
-    if (digits.length > 0) {
-      formatted += "(" + digits.substring(0, 2);
-    }
-    if (digits.length >= 2) {
-      formatted += ") ";
-    }
-    if (digits.length > 2) {
-      formatted += digits.substring(2, 5);
-    }
-    if (digits.length > 5) {
-      formatted += "-" + digits.substring(5, 7);
-    }
-    if (digits.length > 7) {
-      formatted += "-" + digits.substring(7, 9);
-    }
-
-    // Повертаємо ідеальний результат у поле
-    e.target.value = formatted;
-  });
 }
+
+// Запускаємо маску
+initPhoneMask();
 
 // ===========================================================================================
 // ЛОГІКА ДИНАМІЧНОГО ДОДАВАННЯ + ВИДАЛЕННЯ ДОДАТКОВИХ РЯДКІВ З ПОЛЯМИ ТЕЛЕФОНІВ
-// ЛОГІКА ВВЕДЕННЯ ТА СТИРАННЯ НОМЕРУ ТЕЛЕФОНУ В ДОДАТКОВО ДОДАНОМУ ПОЛІ
 // ===========================================================================================
 
 if (btnAddMoreContacts && contactsContainer) {
@@ -327,75 +283,6 @@ if (btnAddMoreContacts && contactsContainer) {
 
       // Приклеюємо кнопку праворуч всередину нашого рядка-конвеєра
       newRow.appendChild(deleteBtn);
-
-      // ===========================================================================================
-      // Логіка введення та стирання номеру телефону на НОВОМУ полі
-      // ===========================================================================================
-      const newPhoneInput = newRow.querySelector(".input_contact_phone");
-      //Якщо наявне поле введення
-      if (newPhoneInput) {
-        // Як тільки користувач ставить курсор в поле телефону відразу прописуємо: +380
-        newPhoneInput.addEventListener("focus", function (e) {
-          if (!e.target.value) e.target.value = "+380 ";
-        });
-
-        // ===========================================================================================
-        // Логіка формату введення додаткових номерів телефонів
-        // ===========================================================================================
-        newPhoneInput.addEventListener("input", function (e) {
-          let inputStr = e.target.value; // Беремо сировину (все, що ввів користувач)
-          let digits = inputStr.replace(/\D/g, ""); // Очищення: викидаємо всі букви, пробіли, залишаємо ТІЛЬКИ чисті цифри
-          if (digits.startsWith("380")) digits = digits.substring(3); // Якщо користувач випадково сам почав писати 380, ми відрізаємо цей шматок, щоб він не дублювався
-          if (digits.startsWith("0")) digits = digits.substring(1); // Якщо користувач за звичкою почав писати з нуля (096...), ми цей нуль теж викидаємо, бо нуль уже є у нашому головному префіксі +380
-          digits = digits.substring(0, 9); // Жорстко обрізаємо сировину! Дозволяємо залишити максимум 9 чистих цифр коду та номера (наприклад: 966456329)
-
-          // Збираємо з чистих цифр красивий номер на екран, підставляючи дужки та дефіси на ходу:
-          let formatted = "+380 ";
-          if (digits.length > 0) formatted += "(" + digits.substring(0, 2);
-          if (digits.length >= 2) formatted += ") ";
-          if (digits.length > 2) formatted += digits.substring(2, 5);
-          if (digits.length > 5) formatted += "-" + digits.substring(5, 7);
-          if (digits.length > 7) formatted += "-" + digits.substring(7, 9);
-          e.target.value = formatted; // Покзуємо цей гарний результат користувачеві на екрані
-        });
-
-        // ===========================================================================================
-        // Логіка стирання номеру телефону
-        // ===========================================================================================
-        // Наказуємо працівнику: "Постійно стеж за клавіатурою. Як тільки користувач натисне будь-яку кнопку в цьому полі — читай інструкцію далі"
-        newPhoneInput.addEventListener("keydown", function (e) {
-          let val = e.target.value; // Працівник бере тимчасову коробку "val" і копіює туди весь текст, який зараз видно на екрані
-
-          // Перевіряємо: якщо користувач натиснув саме кнопку стирання (Backspace)
-          if (e.key === "Backspace") {
-            // Якщо на екрані зараз рівно 9 або 10 символів (тобто користувач намагається стерти цифри коду оператора)
-            if (val.length === 10 || val.length === 9) {
-              e.preventDefault(); // Наказуємо працівнику: "Гальмуй! Заблокуй стандартне стиралка браузера, бо вона зламає нам дужки"
-
-              let digits = val.replace(/\D/g, ""); // Беремо текст, кидаємо в очищувач і залишаємо ТІЛЬКИ чисті цифри (коробка "digits")
-
-              // Якщо на початку стоїть код країни 380 — відрізаємо його, він недоторканний
-              if (digits.startsWith("380")) digits = digits.substring(3);
-
-              // Тепер працівник вручну забирає (викидає) одну останню цифру коду оператора
-              digits = digits.substring(0, digits.length - 1);
-
-              // Якщо в коробці ще залишилися якісь цифри коду — збираємо гарний рядок назад: "+380 (" + цифра
-              if (digits.length > 0) e.target.value = "+380 (" + digits;
-              // Якщо користувач вичистив усе під нуль — просто повертаємо на екран чисту порожню базу
-              else e.target.value = "+380 ";
-
-              return; // Наказ працівнику: "Завдання виконано, повертайся на пост, далі по коду йти не треба"
-            }
-
-            // Команда працівнику: «Якщо користувач стер майже все, і на екрані залишилося тільки +380 , заблокуй клавішу Backspace (e.preventDefault()), не дозволяй йому стерти код країни!
-            if (val.length <= 6) {
-              e.preventDefault();
-              e.target.value = "+380 ";
-            }
-          }
-        });
-      }
 
       // Відправляємо готовий рядок з хрестиком на екран
       contactsContainer.appendChild(newRow);

@@ -188,3 +188,18 @@
   border: 1px solid #ffeeba !important;
   cursor: pointer !important;
 }
+
+/* ==========================================================================
+   Таблиця відображення контрагентів 
+   ========================================================================== */
+#table_for_counterpaties {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  table-layout: fixed;
+}
+/* Додаємо правило для клітинок таблиці */
+#table_for_counterpaties td {
+  word-wrap: break-word;
+  white-space: pre-line; /* <--- Оце змусить текст переноситися по Enter */
+}
